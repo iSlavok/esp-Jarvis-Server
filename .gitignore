@@ -1,0 +1,7 @@
+tts.mp3
+sounds/*
+vosk-model-small-ru-0.22
+venv
+secret.txt
+__pycache__
+.idea
