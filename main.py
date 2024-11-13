@@ -22,15 +22,6 @@ def mqtt_callback(message: str):
     global state
     if message in states:
         state = message
-        match message:
-            case "waiting":
-                pass
-            case "recording":
-                pass
-            case "responding":
-                pass
-            case "speaking":
-                pass
     elif message == "start":
         state = "waiting"
         mqtt.send_message("waiting")
