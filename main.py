@@ -14,7 +14,7 @@ states = ["waiting", "recording", "responding", "speaking"]
 state = "waiting"
 
 
-def audio_callback(data: list[int]):
+def audio_callback(data):
     stt.queue.put(data)
 
 
