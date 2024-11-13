@@ -7,6 +7,8 @@ from stt import STT
 from web_server import WebServer
 import tts
 
+with open('secret.txt', 'r') as file:
+    gemini_token = file.readline().strip()
 
 states = ["waiting", "recording", "responding", "speaking"]
 state = "waiting"
