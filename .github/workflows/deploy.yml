@@ -19,6 +19,11 @@ jobs:
         sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP << EOF
         cd jarvis/esp/esp-Jarvis-Server
         git pull
+        if [ ! -d "venv" ]; then
+            python3.11 -m venv venv
+        fi
+        source venv/bin/activate
         pip install -r requirements.txt
-        python3 main.py
+        python main.py
+        deactivate
         EOF
