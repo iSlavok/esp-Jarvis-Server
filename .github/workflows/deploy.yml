@@ -36,8 +36,8 @@ jobs:
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       run: |
         sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP << EOF
-        cd root/jarvis/esp
+        cd /jarvis/esp
         git pull
-        pip install -r root/jarvis/esp/esp-Jarvis-Server/requirements.txt
-        python root/jarvis/esp/esp-Jarvis-Server/main.py
+        pip install -r /jarvis/esp/esp-Jarvis-Server/requirements.txt
+        python3 /jarvis/esp/esp-Jarvis-Server/main.py
         EOF
