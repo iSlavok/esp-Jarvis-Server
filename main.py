@@ -29,7 +29,7 @@ def mqtt_callback(message: str):
         audio.close_file()
 
 
-def stt_callback(text: str | None):
+def stt_callback(text):
     global state
     if state == "waiting" and text is not None:
         if "джарвис" in text:
