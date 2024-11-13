@@ -21,20 +21,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Add SSH Key
-      run: |
-        echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-
-    - name: Add server to known_hosts
-      run: ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+#    - name: Add SSH Key
+#      run: |
+#        echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+#        chmod 600 ~/.ssh/id_rsa
+#
+#    - name: Add server to known_hosts
+#      run: ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
 
     - name: Deploy to VDS
       env:
         SSH_USER: ${{ secrets.SSH_USER }}
         SERVER_IP: ${{ secrets.SERVER_IP }}
+        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       run: |
-        ssh -i ~/.ssh/id_rsa $SSH_USER@$SERVER_IP << EOF
+        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP << EOF
         cd jarvis/esp
         git pull
         pip install -r esp-Jarvis-Server/requirements.txt
