@@ -56,7 +56,7 @@ audio = Audio(
     callback=audio_callback
 )
 gemini = Gemini(
-    ""
+    gemini_token
 )
 mqtt = MQTTClient(
     host="103.97.88.123",
@@ -76,6 +76,9 @@ web_server = WebServer()
 def main():
     audio_thread = Thread(target=audio.streaming_from_udp)
     audio_thread.start()
+    audio.new_file()
+    audio.close_file()
+    print(1)
     stt_thread = Thread(target=stt.process_audio)
     stt_thread.start()
     web_server_thread = Thread(target=web_server.start)
@@ -88,3 +91,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    print(2)
