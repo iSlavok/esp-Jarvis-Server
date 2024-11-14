@@ -36,6 +36,7 @@ def stt_callback(text):
             state = "recording"
             mqtt.send_message("recording")
             audio.new_file()
+            audio.enable_write = True
     elif state == "recording" and text is None:
         audio.enable_write = False
         audio.close_file()
@@ -76,9 +77,6 @@ web_server = WebServer()
 def main():
     audio_thread = Thread(target=audio.streaming_from_udp)
     audio_thread.start()
-    audio.new_file()
-    audio.close_file()
-    print(1)
     stt_thread = Thread(target=stt.process_audio)
     stt_thread.start()
     web_server_thread = Thread(target=web_server.start)
