@@ -10,7 +10,7 @@ import tts
 with open('secret.txt', 'r') as file:
     gemini_token = file.readline().strip()
 
-states = ["waiting", "recording", "responding", "speaking"]
+states = ["waiting", "recording", "responding", "speaking", "button_recording"]
 state = "waiting"
 
 
@@ -22,11 +22,16 @@ def mqtt_callback(message: str):
     global state
     if message in states:
         state = message
-    elif message == "start":
-        state = "waiting"
-        mqtt.send_message("waiting")
-        audio.enable = True
-        audio.close_file()
+        if message == "button_recording":
+            audio.new_file()
+            audio.enable_write = True
+        elif message == "responding":
+            audio.enable_write = False
+            audio.close_file()
+            response = gemini.generate_from_voice(audio.file_num)
+            tts.generate(response)
+            state = "speaking"
+            mqtt.send_message("speaking")
 
 
 def stt_callback(text):
@@ -53,7 +58,7 @@ audio = Audio(
     port=10052,
     gain=15,
     chunk_size=1024,
-    sample_rate=16000,
+    sample_rate=41100,
     callback=audio_callback
 )
 gemini = Gemini(
@@ -67,7 +72,7 @@ mqtt = MQTTClient(
     callback=mqtt_callback
 )
 stt = STT(
-    sample_rate=16000,
+    sample_rate=41100,
     model_path="./vosk-model-small-ru-0.22",
     callback=stt_callback
 )

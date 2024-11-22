@@ -11,7 +11,7 @@ class Gemini:
 
     def generate_from_voice(self, file_num: int):
         result = self.chat.send_message(
-            [{
+            ["", {
                 "mime_type": "audio/wav",
                 "data": pathlib.Path(f'sounds/{file_num}.wav').read_bytes()
             }],
