@@ -35,6 +35,7 @@ def mqtt_callback(message: str):
 
 
 def stt_callback(text):
+    print(text)
     global state
     if state == "waiting" and text is not None:
         if "джарвис" in text:
@@ -65,7 +66,7 @@ gemini = Gemini(
     gemini_token
 )
 mqtt = MQTTClient(
-    host="103.97.88.123",
+    host="162.247.153.89",
     port=1883,
     command_topic="device/ESP32/command",
     response_topic="device/ESP32/response",
@@ -95,3 +96,4 @@ def main():
 if __name__ == "__main__":
     main()
     print(2)
+

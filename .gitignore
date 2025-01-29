@@ -1,4 +1,5 @@
 tts.mp3
+tts.wav
 sounds/*
 vosk-model-small-ru-0.22
 venv
