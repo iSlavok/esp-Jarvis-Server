@@ -37,7 +37,7 @@ def mqtt_callback(message: str):
 def stt_callback(text):
     global state
     if state == "waiting" and text is not None:
-        if "джарвис" in text:
+        if "джарвис" in text.lower():
             state = "recording"
             mqtt.send_message("recording")
             audio.new_file()
