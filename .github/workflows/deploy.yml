@@ -8,22 +8,28 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Deploy to VDS
-      env:
-        SSH_USER: ${{ secrets.SSH_USER }}
-        SERVER_IP: ${{ secrets.SERVER_IP }}
-        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-      run: |
-        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP << EOF
-        cd jarvis/esp/esp-Jarvis-Server
-        git pull
-        if [ ! -d "venv" ]; then
-            python3.11 -m venv venv
-        fi
-        source venv/bin/activate
-        pip install -r requirements.txt
-        python main.py
-        deactivate
-        EOF
+      - name: Deploy to VDS
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP bash -s << 'EOF'
+          set -e
+          cd jarvis/esp/esp-Jarvis-Server
+          CHANGES=$(git pull)
+          if echo "$CHANGES" | grep -q 'Already up to date.'; then
+              echo "Изменений не обнаружено, перезапуск сервиса не требуется."
+              exit 0
+          fi
+          systemctl stop jarvis-esp
+          if [ ! -d "venv" ]; then
+              python3.11 -m venv venv
+          fi
+          source venv/bin/activate
+          pip install --upgrade --no-cache-dir -r requirements.txt
+          deactivate
+          systemctl start jarvis-esp
+          EOF
