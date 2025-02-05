@@ -35,7 +35,6 @@ def mqtt_callback(message: str):
 
 
 def stt_callback(text):
-    print(text)
     global state
     if state == "waiting" and text is not None:
         if "джарвис" in text:
@@ -74,7 +73,7 @@ mqtt = MQTTClient(
 )
 stt = STT(
     sample_rate=41100,
-    model_path="./vosk-model-small-ru-0.22",
+    model_path="vosk-model-small-ru-0.22",
     callback=stt_callback
 )
 web_server = WebServer()
@@ -95,5 +94,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    print(2)
 

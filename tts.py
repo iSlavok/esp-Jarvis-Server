@@ -14,5 +14,5 @@ model.role = 'good'
 def generate(text):
     t = time.time()
     result = model.synthesize(text, raw_format=False)
-    result.export('tts.wav', 'wav')
+    result.export('tts.mp3', 'mp3', bitrate='128k')
     print(f"speech generated in {time.time() - t} seconds")
