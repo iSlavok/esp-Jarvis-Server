@@ -1,11 +1,12 @@
+import os
 import pathlib
 import time
 import google.generativeai as genai
 
 
 class Gemini:
-    def __init__(self, token):
-        genai.configure(api_key=token)
+    def __init__(self):
+        genai.configure(api_key=os.getenv("GEMINI_TOKEN"))
         model = genai.GenerativeModel(
             model_name="gemini-2.0-flash-lite-preview-02-05",
             system_instruction="Ты ассистент по имени 'Джарвис'. Общайся с пользователями, отвечай текстом, старайся без эмодзи, спец символов и другого форматирования текста так как твои ответы будут переводиться в голос.",

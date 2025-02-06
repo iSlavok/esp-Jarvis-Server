@@ -7,14 +7,11 @@ from stt import STT
 from web_server import WebServer
 import tts
 
-with open('secret.txt', 'r') as file:
-    gemini_token = file.readline().strip()
-
 states = ["waiting", "recording", "responding", "speaking", "button_recording"]
 state = "waiting"
 
 
-def audio_callback(data):
+def audio_callback(data: list[bytes]):
     stt.queue.put(data)
 
 
@@ -34,7 +31,7 @@ def mqtt_callback(message: str):
             mqtt.send_message("speaking")
 
 
-def stt_callback(text):
+def stt_callback(text: str):
     global state
     if state == "waiting" and text is not None:
         if "джарвис" in text.lower():
@@ -61,9 +58,7 @@ audio = Audio(
     sample_rate=41100,
     callback=audio_callback
 )
-gemini = Gemini(
-    gemini_token
-)
+gemini = Gemini()
 mqtt = MQTTClient(
     host="162.247.153.89",
     port=1883,
