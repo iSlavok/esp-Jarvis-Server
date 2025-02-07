@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Real-Time Control Panel</title>
+    <link rel="stylesheet" href="/static/main.css">
+    <script src="/static/script.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-item client-header">
+            <h3>Client Settings</h3>
+            <label for="audioUrl">Audio URL:</label>
+            <div class="input-button-group">
+                <input type="text" id="audioUrl" placeholder="Enter audio URL">
+                <button onclick="updateClientAudioUrl()" class="button">Save</button>
+            </div>
+            <label for="volume">Volume: <span id="volumeDisplay"></span></label>
+            <div class="slider-container">
+                <input type="range" id="volume" min="0" max="100" value="50" class="slider">
+                <button onclick="updateClientVolume()" class="button">Save</button>
+            </div>
+        </div>
+        <div class="header-item state-header">
+            <h3>State</h3>
+            <label for="stateSelect">State: </label>
+                <div class="input-button-group">
+                    <select id="stateSelect" onchange="changeState()"></select>
+                </div>
+            </div>
+        <div class="header-item server-header">
+            <h3>Server Settings</h3>
+            <label for="voiceSelect">Voice:</label>
+            <div class="input-button-group">
+                <select id="voiceSelect" onchange="loadRoles()"></select>
+            </div>
+            <label for="roleSelect">Role:</label>
+                <div class="input-button-group">
+                <select id="roleSelect"></select>
+                <button onclick="updateServerVoice()" class="button">Save</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="section">
+            <h3>Client Logs</h3>
+            <div id="client" class="console"></div>
+        </div>
+        <div class="section">
+            <h3>Server Logs</h3>
+            <div id="server" class="console"></div>
+        </div>
+        <div class="section">
+            <h3>STT Logs</h3>
+            <div id="stt" class="console"></div>
+        </div>
+        <div class="section chat-section">
+            <h3>Model AI Chat</h3>
+            <div id="chatConsole" class="console"></div>
+            <div class="chat-input-container">
+                <input type="text" id="chatInput" placeholder="Type your message..." class="chat-input">
+                <button onclick="sendChatMessage()" class="button chat-button">Send</button>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

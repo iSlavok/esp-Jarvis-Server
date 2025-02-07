@@ -14,11 +14,6 @@ class Gemini:
                 max_output_tokens=500,
                 temperature=1.0,
             ),
-            tools=[
-                genai.protos.Tool(
-                    google_search=genai.protos.Tool.GoogleSearch(),
-                ),
-            ],
         )
         self.chat = model.start_chat()
 
