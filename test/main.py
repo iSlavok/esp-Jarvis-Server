@@ -15,6 +15,10 @@ class StateUpdate(BaseModel):
     new_state: str
 
 
+class VolumeUpdate(BaseModel):
+    volume: int
+
+
 state = "default_state"
 possible_states = ["default_state", "state1", "state2"]
 
@@ -28,7 +32,6 @@ roles_by_voice = {
 }
 
 
-# Менеджер подключений для работы с WebSocket
 class ConnectionManager:
     def __init__(self):
         self.active_connections: list[WebSocket] = []
@@ -48,13 +51,11 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
-# Главная страница
 @app.get("/", response_class=HTMLResponse)
 async def get(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
-# Эндпоинты для получения данных
 @app.get("/states")
 async def get_states():
     return {"states": possible_states, "current_state": state}
@@ -84,15 +85,23 @@ async def get_server_config():
 async def update_state(data: StateUpdate):
     global state
     state = data.new_state
-    await manager.broadcast(json.dumps({"type": "state_update", "state": state}))
-    return {"status": "ok", "state": state}
+    await manager.broadcast(json.dumps({"type": "state", "state": state}))
+    return {"status": "ok"}
+
+
+@app.post("/update_volume")
+async def update_volume(data: VolumeUpdate):
+    global client_config
+    volume = data.volume
+    client_config["volume"] = volume
+    return {"status": "ok"}
 
 
 @app.post("/update_client_config")
 async def update_client_config(config: dict):
     global client_config
     client_config.update(config)
-    await manager.broadcast(json.dumps({"type": "client_config_update", "config": client_config}))
+    await manager.broadcast(json.dumps({"type": ""}))
     return {"status": "ok", "config": client_config}
 
 
@@ -104,23 +113,14 @@ async def update_server_config(config: dict):
     return {"status": "ok", "config": server_config}
 
 
-# WebSocket-эндпоинт для обмена данными в реальном времени
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
             data = await websocket.receive_text()
-            # Здесь можно обрабатывать входящие сообщения от клиента
             message = json.loads(data)
             if message["type"] == "chat_message":
-                print(message["message"])
+                pass
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-
-
-# # Запуск сервера
-# if __name__ == "__main__":
-#     import uvicorn
-#
-#     uvicorn.run(app, host="0.0.0.0", port=5002)

@@ -33,3 +33,7 @@ class Gemini:
             prompt
         )
         return result.text
+
+
+# gemini = Gemini()
+# print(gemini.generate_from_text("Привет, как дела?"))

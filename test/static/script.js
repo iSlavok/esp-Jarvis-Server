@@ -82,6 +82,19 @@ let ws;
       });
     }
 
+    function updateVolume() {
+        const volume = document.getElementById('volume').value;
+        fetch('/update_volume', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ volume: volume })
+        })
+        .then(response => response.json())
+        .then(data => {
+          appendLog('client', 'info', 'Volume set: ' + data.volume.toString());
+        });
+    }
+
     function updateClientConfig() {
       const audioUrl = document.getElementById('audioUrl').value;
       const volume = document.getElementById('volume').value;
@@ -142,10 +155,11 @@ let ws;
     }
 
     function appendLog(type, level, message) {
+        console.log(message);
       const consoleDiv = document.getElementById(type);
       const currentTime = new Date().toLocaleTimeString('en-US', {hour12: false});
       const logEntry = document.createElement('div');
-      logEntry.textContent = `[${currentTime}] [${type}] ${message}`;
+      logEntry.textContent = `[${currentTime}] [${level}] ${message}`;
       consoleDiv.appendChild(logEntry);
       consoleDiv.scrollTop = consoleDiv.scrollHeight;
     }

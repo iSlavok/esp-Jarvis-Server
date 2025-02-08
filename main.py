@@ -1,14 +1,14 @@
+import os
 from threading import Thread
-
 from audio import Audio
 from gemini import Gemini
 from mqtt import MQTTClient
 from stt import STT
 from web_server import WebServer
+from state_manager import StateManager
 import tts
 
-states = ["waiting", "recording", "responding", "speaking", "button_recording"]
-state = "waiting"
+state_manager = StateManager("waiting")
 
 
 def audio_callback(data: list[bytes]):
@@ -16,9 +16,8 @@ def audio_callback(data: list[bytes]):
 
 
 def mqtt_callback(message: str):
-    global state
-    if message in states:
-        state = message
+    if message in state_manager.states:
+        state_manager.state = message
         if message == "button_recording":
             audio.new_file()
             audio.enable_write = True
@@ -27,26 +26,25 @@ def mqtt_callback(message: str):
             audio.close_file()
             response = gemini.generate_from_voice(audio.file_num)
             tts.generate(response)
-            state = "speaking"
+            state_manager.state = "speaking"
             mqtt.send_message("speaking")
 
 
 def stt_callback(text: str):
-    global state
-    if state == "waiting" and text is not None:
+    if state_manager.state == "waiting" and text is not None:
         if "джарвис" in text.lower():
-            state = "recording"
+            state_manager.state = "recording"
             mqtt.send_message("recording")
             audio.new_file()
             audio.enable_write = True
-    elif state == "recording" and text is None:
+    elif state_manager.state == "recording" and text is None:
         audio.enable_write = False
         audio.close_file()
-        state = "responding"
+        state_manager.state = "responding"
         mqtt.send_message("responding")
         response = gemini.generate_from_voice(audio.file_num)
         tts.generate(response)
-        state = "speaking"
+        state_manager.state = "speaking"
         mqtt.send_message("speaking")
 
 
@@ -60,8 +58,10 @@ audio = Audio(
 )
 gemini = Gemini()
 mqtt = MQTTClient(
-    host="162.247.153.89",
+    host="103.97.88.123",
     port=1883,
+    username=os.getenv("MQTT_USERNAME"),
+    password=os.getenv("MQTT_PASSWORD"),
     command_topic="device/ESP32/command",
     response_topic="device/ESP32/response",
     callback=mqtt_callback
@@ -71,20 +71,22 @@ stt = STT(
     model_path="vosk-model-small-ru-0.22",
     callback=stt_callback
 )
-web_server = WebServer()
-
+# web_server = WebServer(
+#     state_manager=state_manager,
+#     mqtt_client=mqtt,
+# )
 
 def main():
     audio_thread = Thread(target=audio.streaming_from_udp)
     audio_thread.start()
     stt_thread = Thread(target=stt.process_audio)
     stt_thread.start()
-    web_server_thread = Thread(target=web_server.start)
-    web_server_thread.start()
+    # web_server_thread = Thread(target=web_server.start)
+    # web_server_thread.start()
     audio_thread.join()
     stt_thread.join()
-    web_server_thread.join()
-    mqtt.send_message(state)
+    # web_server_thread.join()
+    mqtt.send_message(state_manager.state)
 
 
 if __name__ == "__main__":
