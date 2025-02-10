@@ -9,8 +9,10 @@ from starlette.responses import HTMLResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from starlette.websockets import WebSocketDisconnect, WebSocket
+from config_manager import ConfigManager
+from gemini import Gemini
 from state_manager import StateManager
-from mqtt import MQTTClient
+from tts import TTS
 
 
 class ConnectionManager:
@@ -33,19 +35,35 @@ class StateUpdate(BaseModel):
     new_state: str
 
 
+class HostUpdate(BaseModel):
+    host: str
+
+
 class VolumeUpdate(BaseModel):
     volume: int
 
 
+class VoiceUpdate(BaseModel):
+    voice: str
+    role: str
+
+
 class WebServer:
-    def __init__(self, state_manager: StateManager, mqtt_client: MQTTClient):
+    def __init__(self, state_manager: StateManager, config_manager: ConfigManager, tts: TTS, mqtt_client, gemini: Gemini):
         self.state_manager = state_manager
+        self.config_manager = config_manager
         self.mqtt_client = mqtt_client
+        self.tts = tts
+        self.gemini = gemini
         self.app = FastAPI()
         self.setup_routes()
         self.manager = ConnectionManager()
         self.templates = Jinja2Templates(directory="templates")
         self.app.mount("/static", StaticFiles(directory="static"), name="static")
+
+    @property
+    def websocket_manager(self):
+        return self.manager
 
     def setup_routes(self):
         @self.app.get("/audio-stream")
@@ -58,53 +76,52 @@ class WebServer:
         async def get(request: Request):
             return self.templates.TemplateResponse("index.html", {"request": request})
 
-        @self.app.get("/states")
-        async def get_states():
-            return {"states": possible_states, "current_state": state}
-
-        @self.app.get("/voices")
-        async def get_voices():
-            return {"voices": voices}
-
         @self.app.get("/roles")
         async def get_roles(voice: str):
-            return {"roles": roles_by_voice.get(voice, [])}
+            return {"roles": self.config_manager.voices.get(voice, [])}
 
-        @self.app.get("/client_config")
-        async def get_client_config():
-            return client_config
-
-        @self.app.get("/server_config")
-        async def get_server_config():
-            return server_config
+        @self.app.get("/config")
+        async def get_config():
+            return {
+                "audio_url": self.config_manager.host,
+                "volume": self.config_manager.volume,
+                "voices": list(self.config_manager.voices.keys()),
+                "voice": self.config_manager.voice,
+                "role": self.config_manager.role,
+                "states": self.state_manager.states,
+                "current_state": self.state_manager.state
+            }
 
         @self.app.post("/update_state")
         async def update_state(data: StateUpdate):
-            global state
-            state = data.new_state
-            await self.manager.broadcast(json.dumps({"type": "state", "state": state}))
+            if data.new_state != self.state_manager.state:
+                self.state_manager.state = data.new_state
+                self.mqtt_client.send_message(f"state {data.new_state}")
+                await self.manager.broadcast(json.dumps({"type": "server", "message": f"State updated to {data.new_state}"}))
+            return {"status": "ok"}
+
+        @self.app.post("/update_host")
+        async def update_host(data: HostUpdate):
+            if data.host != self.config_manager.host:
+                self.config_manager.host = data.host
+                self.mqtt_client.send_message(f"host {data.host}")
             return {"status": "ok"}
 
         @self.app.post("/update_volume")
         async def update_volume(data: VolumeUpdate):
-            global client_config
-            volume = data.volume
-            client_config["volume"] = volume
+            if data.volume != self.config_manager.volume:
+                self.config_manager.volume = data.volume
+                self.mqtt_client.send_message(f"volume {data.volume}")
             return {"status": "ok"}
 
-        @self.app.post("/update_client_config")
-        async def update_client_config(config: dict):
-            global client_config
-            client_config.update(config)
-            await self.manager.broadcast(json.dumps({"type": ""}))
-            return {"status": "ok", "config": client_config}
-
-        @self.app.post("/update_server_config")
-        async def update_server_config(config: dict):
-            global server_config
-            server_config.update(config)
-            await self.manager.broadcast(json.dumps({"type": "server_config_update", "config": server_config}))
-            return {"status": "ok", "config": server_config}
+        @self.app.post("/update_voice")
+        async def update_voice(voice: VoiceUpdate):
+            if voice.voice != self.config_manager.voice or voice.role != self.config_manager.role:
+                self.config_manager.voice = voice.voice
+                self.config_manager.role = voice.role
+                self.tts.set_voice(voice.voice, voice.role)
+                await self.manager.broadcast(json.dumps({"type": "server", "message": f"Voice updated to {voice.voice}, {voice.role}"}))
+            return {"status": "ok"}
 
         @self.app.websocket("/ws")
         async def websocket_endpoint(websocket: WebSocket):
@@ -114,9 +131,9 @@ class WebServer:
                     data = await websocket.receive_text()
                     message = json.loads(data)
                     if message["type"] == "chat_message":
-                        pass
+                        self.gemini.generate_from_text(message["message"])
             except WebSocketDisconnect:
                 self.manager.disconnect(websocket)
 
     def start(self):
-        uvicorn.run(self.app, host="0.0.0.0", port=5000)
+        uvicorn.run(self.app, host="0.0.0.0", port=5252)

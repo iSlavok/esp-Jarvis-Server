@@ -33,4 +33,5 @@ class STT:
                         else:
                             self.callback(None)
             except Exception as e:
+                self.callback(str(e))
                 print(f"Ошибка в процессе распознавания: {e}")

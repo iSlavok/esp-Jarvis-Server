@@ -1,20 +1,49 @@
+import asyncio
+import json
 import os
-
 from speechkit import model_repository, configure_credentials, creds
 import time
 
-configure_credentials(
-    yandex_credentials=creds.YandexCredentials(
-        api_key=os.getenv("YANDEX_TOKEN")
-    )
-)
-model = model_repository.synthesis_model()
-model.voice = 'kirill'
-model.role = 'good'
 
+class TTS:
+    def __init__(self, websocket_manager=None):
+        self.websocket_manager = websocket_manager
+        configure_credentials(
+            yandex_credentials=creds.YandexCredentials(
+                api_key=os.getenv("YANDEX_TOKEN")
+            )
+        )
+        self.model = model_repository.synthesis_model()
+        self.model.voice = 'kirill'
+        self.model.role = 'good'
 
-def generate(text: str):
-    t = time.time()
-    result = model.synthesize(text, raw_format=False)
-    result.export('tts.mp3', 'mp3', bitrate='128k')
-    print(f"speech generated in {time.time() - t} seconds")
+    def set_websocket_manager(self, manager):
+        self.websocket_manager = manager
+
+    def send_to_websocket(self, message: str):
+        if self.websocket_manager:
+            asyncio.run(self.websocket_manager.broadcast(message))
+
+    def set_voice(self, voice: str, role: str):
+        self.model.voice = voice
+        self.model.role = role
+
+    def generate(self, text: str):
+        t = time.time()
+        result = self.model.synthesize(text, raw_format=False)
+        result.export('tts.mp3', 'mp3', bitrate='64k')
+        print(f"speech generated in {time.time() - t} seconds")
+        self.send_to_websocket(json.dumps({"type": "server", "message": f"speech generated in {time.time() - t} seconds"}))
+
+# speech = TTS()
+# speech.generate("""Глобальное потепление – одна из самых серьезных проблем, стоящих перед человечеством в XXI веке. Это долгосрочное увеличение средней температуры земной атмосферы и океанов, которое происходит главным образом из-за усиления парникового эффекта. Парниковый эффект, в свою очередь, вызывается увеличением концентрации парниковых газов в атмосфере, таких как углекислый газ, метан и оксид азота.
+#
+# Основной причиной увеличения концентрации парниковых газов является деятельность человека, в первую очередь сжигание ископаемого топлива (уголь, нефть и газ) для производства энергии. Это приводит к выбросам огромного количества углекислого газа в атмосферу. Кроме того, значительный вклад вносят вырубка лесов, сельское хозяйство и промышленные процессы. Леса играют важную роль в поглощении углекислого газа из атмосферы, и их уничтожение уменьшает эту способность.
+#
+# Глобальное потепление имеет множество негативных последствий для окружающей среды и человеческого общества. Одним из наиболее заметных является таяние ледников и полярных шапок, что приводит к повышению уровня моря. Это угрожает прибрежным городам и экосистемам, вызывая наводнения и эрозию. Изменение климата также приводит к увеличению частоты и интенсивности экстремальных погодных явлений, таких как засухи, наводнения, ураганы и лесные пожары.
+#
+# Глобальное потепление также оказывает влияние на сельское хозяйство, изменяя условия для выращивания сельскохозяйственных культур и увеличивая риск неурожаев. Это может привести к продовольственной нестабильности и голоду в некоторых регионах мира. Кроме того, изменение климата способствует распространению болезней, переносимых насекомыми, таких как малярия и лихорадка денге.
+#
+# Для решения проблемы глобального потепления необходимы скоординированные усилия на глобальном, национальном и индивидуальном уровнях. Необходимо переходить к использованию возобновляемых источников энергии, таких как солнечная, ветровая и гидроэнергия, чтобы сократить зависимость от ископаемого топлива. Важно также повышать энергоэффективность в промышленности, транспорте и зданиях.
+#
+# Сохранение и восстановление лесов играет важную роль""")

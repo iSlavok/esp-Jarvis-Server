@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Real-Time Control Panel</title>
@@ -13,7 +13,7 @@
             <label for="audioUrl">Audio URL:</label>
             <div class="input-button-group">
                 <input type="text" id="audioUrl" placeholder="Enter audio URL">
-                <button onclick="updateClientAudioUrl()" class="button">Save</button>
+                <button onclick="updateHost()" class="button">Save</button>
             </div>
             <label for="volume">Volume: <span id="volumeDisplay"></span></label>
             <div class="slider-container">
@@ -37,7 +37,7 @@
             <label for="roleSelect">Role:</label>
                 <div class="input-button-group">
                 <select id="roleSelect"></select>
-                <button onclick="updateServerVoice()" class="button">Save</button>
+                <button onclick="updateVoice()" class="button">Save</button>
             </div>
         </div>
     </header>

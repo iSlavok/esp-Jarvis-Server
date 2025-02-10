@@ -1,3 +1,5 @@
+import asyncio
+import json
 import os
 from threading import Thread
 from audio import Audio
@@ -6,9 +8,8 @@ from mqtt import MQTTClient
 from stt import STT
 from web_server import WebServer
 from state_manager import StateManager
-import tts
-
-state_manager = StateManager("waiting")
+from config_manager import ConfigManager
+from tts import TTS
 
 
 def audio_callback(data: list[bytes]):
@@ -18,6 +19,7 @@ def audio_callback(data: list[bytes]):
 def mqtt_callback(message: str):
     if message in state_manager.states:
         state_manager.state = message
+        send_state_to_websocket()
         if message == "button_recording":
             audio.new_file()
             audio.enable_write = True
@@ -27,27 +29,52 @@ def mqtt_callback(message: str):
             response = gemini.generate_from_voice(audio.file_num)
             tts.generate(response)
             state_manager.state = "speaking"
-            mqtt.send_message("speaking")
+            send_state_to_websocket()
+            mqtt.send_message("state speaking")
+    elif message == "ready":
+        state_manager.state = "waiting"
+        send_state_to_websocket()
+        mqtt.send_message(f"host {config_manager.host}")
+        mqtt.send_message(f"volume {config_manager.volume}")
 
 
 def stt_callback(text: str):
+    if text is not None:
+        asyncio.run(web_server.websocket_manager.broadcast(json.dumps({"type": "stt", "message": text})))
     if state_manager.state == "waiting" and text is not None:
         if "джарвис" in text.lower():
             state_manager.state = "recording"
-            mqtt.send_message("recording")
+            send_state_to_websocket()
+            mqtt.send_message("state recording")
             audio.new_file()
             audio.enable_write = True
     elif state_manager.state == "recording" and text is None:
         audio.enable_write = False
         audio.close_file()
         state_manager.state = "responding"
-        mqtt.send_message("responding")
+        send_state_to_websocket()
+        mqtt.send_message("state responding")
         response = gemini.generate_from_voice(audio.file_num)
         tts.generate(response)
         state_manager.state = "speaking"
-        mqtt.send_message("speaking")
+        send_state_to_websocket()
+        mqtt.send_message("state speaking")
 
 
+def send_state_to_websocket():
+    if web_server.websocket_manager:
+        asyncio.run(web_server.websocket_manager.broadcast(json.dumps({"type": "state", "state": state_manager.state})))
+
+
+state_manager = StateManager("waiting")
+config_manager = ConfigManager()
+gemini = Gemini()
+tts = TTS()
+stt = STT(
+    sample_rate=41100,
+    model_path="vosk-model-small-ru-0.22",
+    callback=stt_callback
+)
 audio = Audio(
     ip="0.0.0.0",
     port=10052,
@@ -56,7 +83,6 @@ audio = Audio(
     sample_rate=41100,
     callback=audio_callback
 )
-gemini = Gemini()
 mqtt = MQTTClient(
     host="103.97.88.123",
     port=1883,
@@ -64,29 +90,32 @@ mqtt = MQTTClient(
     password=os.getenv("MQTT_PASSWORD"),
     command_topic="device/ESP32/command",
     response_topic="device/ESP32/response",
+    log_topic="device/ESP32/log",
     callback=mqtt_callback
 )
-stt = STT(
-    sample_rate=41100,
-    model_path="vosk-model-small-ru-0.22",
-    callback=stt_callback
+web_server = WebServer(
+    state_manager=state_manager,
+    config_manager=config_manager,
+    tts=tts,
+    mqtt_client=mqtt,
+    gemini=gemini
 )
-# web_server = WebServer(
-#     state_manager=state_manager,
-#     mqtt_client=mqtt,
-# )
+mqtt.set_websocket_manager(web_server.websocket_manager)
+gemini.set_websocket_manager(web_server.websocket_manager)
+tts.set_websocket_manager(web_server.websocket_manager)
+
 
 def main():
     audio_thread = Thread(target=audio.streaming_from_udp)
     audio_thread.start()
     stt_thread = Thread(target=stt.process_audio)
     stt_thread.start()
-    # web_server_thread = Thread(target=web_server.start)
-    # web_server_thread.start()
+    web_server_thread = Thread(target=web_server.start)
+    web_server_thread.start()
     audio_thread.join()
     stt_thread.join()
-    # web_server_thread.join()
-    mqtt.send_message(state_manager.state)
+    web_server_thread.join()
+    mqtt.send_message(f"state {state_manager.state}")
 
 
 if __name__ == "__main__":
