@@ -14,7 +14,7 @@ class Gemini:
 
     def set_websocket_manager(self, manager):
         self.websocket_manager = manager
-z
+
     def send_to_websocket(self, message: str):
         if self.websocket_manager:
             asyncio.run(self.websocket_manager.broadcast(message))
