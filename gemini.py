@@ -1,6 +1,5 @@
 import asyncio
 import json
-import os
 import pathlib
 import time
 from google import genai
@@ -9,14 +8,13 @@ from google.genai import types
 
 class Gemini:
     def __init__(self, websocket_manager=None):
-        print(os.getenv("GOOGLE_API_KEY"))
         self.websocket_manager = websocket_manager
         self.client = genai.Client()
         self.chat = self.create_chat()
 
     def set_websocket_manager(self, manager):
         self.websocket_manager = manager
-
+z
     def send_to_websocket(self, message: str):
         if self.websocket_manager:
             asyncio.run(self.websocket_manager.broadcast(message))
@@ -28,10 +26,13 @@ class Gemini:
     def generate_from_voice(self, file_num: int) -> str:
         t = time.time()
         result = self.chat.send_message(
-            [".", {
-                "mime_type": "audio/wav",
-                "data": pathlib.Path(f'sounds/{file_num}.wav').read_bytes()
-            }]
+            [
+                ".",
+                types.Part.from_bytes(
+                    data=pathlib.Path(f'sounds/{file_num}.wav').read_bytes(),
+                    mime_type='audio/wav',
+                )
+            ]
         )
         print(f"response generated in {time.time() - t} seconds")
         self.send_to_websocket(json.dumps({"type": "server", "message": f"response generated in {time.time() - t} seconds"}))
