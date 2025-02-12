@@ -9,8 +9,9 @@ from google.genai import types
 class Gemini:
     def __init__(self, websocket_manager=None):
         self.websocket_manager = websocket_manager
-        self.client = genai.Client()
-        self.chat = self.create_chat()
+        # self.client = genai.Client()
+        self.chat = None
+        # self.create_chat()
 
     def set_websocket_manager(self, manager):
         self.websocket_manager = manager
@@ -50,7 +51,7 @@ class Gemini:
         return result.text
 
     def create_chat(self):
-        return self.client.chats.create(
+        self.chat = self.client.chats.create(
             model="gemini-2.0-flash",
             config=types.GenerateContentConfig(
                 system_instruction="Ты ассистент по имени 'Джарвис'. Общайся с пользователями, отвечай текстом, старайся без эмодзи, спец символов и другого форматирования текста так как твои ответы будут переводиться в голос.",

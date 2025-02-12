@@ -122,6 +122,12 @@ class WebServer:
                 self.tts.set_voice(voice.voice, voice.role)
                 await self.manager.broadcast(json.dumps({"type": "server", "message": f"Voice updated to {voice.voice}, {voice.role}"}))
             return {"status": "ok"}
+        
+        @self.app.post("/clear_chat")
+        async def clear_chat():
+            self.gemini.create_chat()
+            await self.manager.broadcast(json.dumps({"type": "server", "message": "Chat clear"}))
+            return {"status": "ok"}
 
         @self.app.websocket("/ws")
         async def websocket_endpoint(websocket: WebSocket):

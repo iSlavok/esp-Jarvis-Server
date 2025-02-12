@@ -89,6 +89,13 @@ function updateVoice() {
     })
 }
 
+function clearChat() {
+    fetch('clear_chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+}
+
 function initWebSocket() {
     ws = new WebSocket(`ws://${window.location.host}/ws`);
     ws.onopen = () => {
