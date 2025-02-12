@@ -66,7 +66,7 @@ class WebServer:
         return self.manager
 
     def setup_routes(self):
-        @self.app.get("/audio-stream")
+        @self.app.get("/audio")
         async def audio_file():
             if os.path.exists("tts.mp3"):
                 return FileResponse("tts.mp3", media_type="audio/mp3")

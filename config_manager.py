@@ -6,7 +6,7 @@ class ConfigManager:
         self._voice = "kirill"
         self._role = "good"
         self._volume = 50
-        self._host = "http://localhost:5000/audio-stream"
+        self._host = "http://103.97.88.123:5252/audio"
         self._lock = Lock()
         self._voices = {
             "alena": ["neutral", "good"],
