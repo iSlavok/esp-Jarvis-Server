@@ -90,10 +90,13 @@ function updateVoice() {
 }
 
 function clearChat() {
-    fetch('clear_chat', {
+    fetch('/clear_chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
     })
+    .then(() => {
+        document.getElementById('chatConsole').innerHTML = '';
+    });
 }
 
 function initWebSocket() {
