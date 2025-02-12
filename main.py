@@ -13,7 +13,6 @@ from tts import TTS
 
 
 def audio_callback(data: list[bytes]):
-    return
     stt.queue.put(data)
 
 
@@ -71,11 +70,11 @@ state_manager = StateManager("waiting")
 config_manager = ConfigManager()
 gemini = Gemini()
 tts = TTS()
-# stt = STT(
-#     sample_rate=41100,
-#     model_path="vosk-model-small-ru-0.22",
-#     callback=stt_callback
-# )
+stt = STT(
+    sample_rate=41100,
+    model_path="vosk-model-small-ru-0.22",
+    callback=stt_callback
+)
 audio = Audio(
     ip="0.0.0.0",
     port=10052,
@@ -109,12 +108,12 @@ tts.set_websocket_manager(web_server.websocket_manager)
 def main():
     audio_thread = Thread(target=audio.streaming_from_udp)
     audio_thread.start()
-    # stt_thread = Thread(target=stt.process_audio)
-    # stt_thread.start()
+    stt_thread = Thread(target=stt.process_audio)
+    stt_thread.start()
     web_server_thread = Thread(target=web_server.start)
     web_server_thread.start()
     audio_thread.join()
-    # stt_thread.join()
+    stt_thread.join()
     web_server_thread.join()
     mqtt.send_message(f"state {state_manager.state}")
 

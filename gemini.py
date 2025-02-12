@@ -9,9 +9,9 @@ from google.genai import types
 class Gemini:
     def __init__(self, websocket_manager=None):
         self.websocket_manager = websocket_manager
-        # self.client = genai.Client()
+        self.client = genai.Client()
         self.chat = None
-        # self.create_chat()
+        self.create_chat()
 
     def set_websocket_manager(self, manager):
         self.websocket_manager = manager
