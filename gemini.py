@@ -26,13 +26,11 @@ class Gemini:
 
     def generate_from_voice(self, file_num: int) -> str:
         t = time.time()
+        file = self.client.files.upload(path=f'audio/{file_num}.wav')
         result = self.chat.send_message(
             [
                 ".",
-                types.Part.from_bytes(
-                    data=pathlib.Path(f'sounds/{file_num}.wav').read_bytes(),
-                    mime_type='audio/wav',
-                )
+                file,
             ]
         )
         print(f"response generated in {time.time() - t} seconds")
