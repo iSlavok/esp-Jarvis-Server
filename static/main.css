@@ -167,7 +167,10 @@ input[type="text"], select {
 .chat-button {
     padding: 10px 20px;
     border-radius: 20px;
+}
 
+.clear-chat-button {
+    float: right;
 }
 
 .chat-message {
