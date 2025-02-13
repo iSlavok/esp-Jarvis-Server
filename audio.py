@@ -37,7 +37,7 @@ class Audio:
         if self.wav_file is not None:
             return False
         self.file_num += 1
-        self.wav_file = wave.open(f"sounds/{self.file_num}.wav", 'wb')
+        self.wav_file = wave.open(f"audio/{self.file_num}.wav", 'wb')
         self.wav_file.setnchannels(1)
         self.wav_file.setsampwidth(2)
         self.wav_file.setframerate(self.sample_rate)
