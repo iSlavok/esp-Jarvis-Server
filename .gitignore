@@ -1,5 +1,5 @@
 tts.mp3
-sounds/*
+audio/*
 vosk-model-small-ru-0.22
 venv
 secret.txt
