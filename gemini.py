@@ -26,7 +26,7 @@ class Gemini:
 
     def generate_from_voice(self, file_num: int) -> str:
         t = time.time()
-        file = self.client.files.upload(file=f'audio/{file_num}.wav')
+        file = self.client.files.upload(file=f'audio/{file_num}.mp3')
         result = self.chat.send_message(
             [
                 ".",
