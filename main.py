@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import subprocess
 from threading import Thread
 from audio import Audio
 from gemini import Gemini
@@ -10,10 +11,6 @@ from web_server import WebServer
 from state_manager import StateManager
 from config_manager import ConfigManager
 from tts import TTS
-
-
-def audio_callback(data: list[bytes]):
-    stt.queue.put(data)
 
 
 def mqtt_callback(message: str):
@@ -66,22 +63,32 @@ def send_state_to_websocket():
         asyncio.run(web_server.websocket_manager.broadcast(json.dumps({"type": "state", "state": state_manager.state})))
 
 
+ffmpeg_cmd = [
+    "ffmpeg",
+    "-loglevel", "quiet",
+    "-f", "mp3",
+    "-i", "pipe:0",
+    "-f", "s16le",
+    "-ar", "16000",
+    "-ac", "1",
+    "pipe:1"
+]
+ffmpeg_proc = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
 state_manager = StateManager("waiting")
 config_manager = ConfigManager()
 gemini = Gemini()
 tts = TTS()
 stt = STT(
-    sample_rate=41100,
+    sample_rate=16000,
     model_path="vosk-model-small-ru-0.22",
-    callback=stt_callback
+    callback=stt_callback,
+    ffmpeg_proc=ffmpeg_proc,
 )
 audio = Audio(
     ip="0.0.0.0",
     port=10052,
-    gain=15,
-    chunk_size=1024,
-    sample_rate=41100,
-    callback=audio_callback
+    ffmpeg_proc=ffmpeg_proc,
 )
 mqtt = MQTTClient(
     host="103.97.88.123",
@@ -120,4 +127,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
