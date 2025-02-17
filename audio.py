@@ -1,3 +1,4 @@
+import os
 import socket
 
 
@@ -25,6 +26,8 @@ class Audio:
 
     def new_file(self):
         self.file_num += 1
+        if os.path.exists(f"audio/{self.file_num}.mp3"):
+            os.remove(f"audio/{self.file_num}.mp3")
         self.enable_write = True
 
     def close_file(self):
