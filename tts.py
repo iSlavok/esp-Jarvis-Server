@@ -30,9 +30,10 @@ class TTS:
         self.model.voice = voice
         self.model.role = role
 
-    def generate(self, text: str):
+    def generate(self, text: str) -> str:
         t = time.time()
         result = self.model.synthesize(text, raw_format=False)
         result.export('tts.mp3', 'mp3', bitrate='64k')
         print(f"speech generated in {time.time() - t} seconds")
+        return f"speech generated in {time.time() - t} seconds"
         self.send_to_websocket(json.dumps({"type": "server", "message": f"speech generated in {time.time() - t} seconds"}))

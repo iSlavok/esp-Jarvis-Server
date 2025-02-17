@@ -38,18 +38,18 @@ function init() {
 function loadRoles(callback) {
     const voice = document.getElementById('voiceSelect').value;
     fetch('/roles?voice=' + voice)
-        .then(response => response.json())
-        .then(data => {
-            const roleSelect = document.getElementById('roleSelect');
-            roleSelect.innerHTML = '';
-            data.roles.forEach(role => {
-                let option = document.createElement('option');
-                option.value = role;
-                option.text = role;
-                roleSelect.appendChild(option);
-            });
-            if(callback) callback();
+    .then(response => response.json())
+    .then(data => {
+        const roleSelect = document.getElementById('roleSelect');
+        roleSelect.innerHTML = '';
+        data.roles.forEach(role => {
+            let option = document.createElement('option');
+            option.value = role;
+            option.text = role;
+            roleSelect.appendChild(option);
         });
+        if(callback) callback();
+    });
 }
 
 function changeState() {
@@ -58,6 +58,16 @@ function changeState() {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({new_state: newState})
+    })
+}
+
+function sendSpeech() {
+    const speechText = document.getElementById('speechInput').value;
+    if (speechText.trim() === '') return;
+    fetch('/send_speech', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({speech: speechText})
     })
 }
 

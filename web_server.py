@@ -35,6 +35,10 @@ class StateUpdate(BaseModel):
     new_state: str
 
 
+class Speech(BaseModel):
+    speech: str
+
+
 class HostUpdate(BaseModel):
     host: str
 
@@ -98,6 +102,13 @@ class WebServer:
                 self.state_manager.state = data.new_state
                 self.mqtt_client.send_message(f"state {data.new_state}")
                 await self.manager.broadcast(json.dumps({"type": "server", "message": f"State updated to {data.new_state}"}))
+            return {"status": "ok"}
+
+        @self.app.post("/send_speech")
+        async def send_speech(data: Speech):
+            await self.manager.broadcast(json.dumps({"type": "server", "message": self.tts.generate(data.speech)}))
+            await update_state(StateUpdate(new_state="speaking"))
+            await self.manager.broadcast(json.dumps({"type": "state", "state": "speaking"}))
             return {"status": "ok"}
 
         @self.app.post("/update_host")

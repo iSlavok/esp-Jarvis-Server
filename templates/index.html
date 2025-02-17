@@ -23,11 +23,15 @@
         </div>
         <div class="header-item state-header">
             <h3>State</h3>
-            <label for="stateSelect">State: </label>
-                <div class="input-button-group">
-                    <select id="stateSelect" onchange="changeState()"></select>
-                </div>
+            <div class="input-button-group">
+                <select id="stateSelect" onchange="changeState()"></select>
             </div>
+            <h3>Speech</h3>
+            <div class="input-button-group">
+                <input type="text" id="speechInput" placeholder="Enter speech text">
+                <button onclick="sendSpeech()" class="button">speech</button>
+            </div>
+        </div>
         <div class="header-item server-header">
             <h3>Server Settings</h3>
             <label for="voiceSelect">Voice:</label>
