@@ -24,7 +24,7 @@ def mqtt_callback(message: str):
             audio.enable_write = False
             audio.close_file()
             response = gemini.generate_from_voice(audio.file_num)
-            tts.generate(response)
+            tts.send_to_websocket(json.dumps({"type": "server", "message": tts.generate(response)}))
             state_manager.state = "speaking"
             send_state_to_websocket()
             mqtt.send_message("state speaking")
@@ -52,7 +52,7 @@ def stt_callback(text: str):
         send_state_to_websocket()
         mqtt.send_message("state responding")
         response = gemini.generate_from_voice(audio.file_num)
-        tts.generate(response)
+        tts.send_to_websocket(json.dumps({"type": "server", "message": tts.generate(response)}))
         state_manager.state = "speaking"
         send_state_to_websocket()
         mqtt.send_message("state speaking")
